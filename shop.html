@@ -1,0 +1,431 @@
+<!--
+  Copyright (c) 2025 Suishin15cm
+  Released under the MIT License  
+  See the LICENSE.txt file for details.
+-->
+<!--
+  This project uses qrcodejs (MIT License).
+  https://github.com/davidshimjs/qrcodejs
+
+  Copyright (c) 2012 davidshimjs
+  See library/LICENSE file for details.
+-->
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>物販購入ページ</title>
+  <script src="./library/qrcode.js"></script>
+  
+  <style>
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+      background: #f2f2f2;
+      margin: 0;
+      padding: 1rem;
+    }
+
+    h2 {
+      text-align: center
+    }
+
+    section {
+      max-width: 480px;
+      margin: 1rem auto;
+      background: #fff;
+      padding: 1rem;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    }
+
+    h3 {
+      text-align: center;
+      border-bottom: 2px solid #447a95;
+      padding-bottom: 4px;
+    }
+
+    .description{
+      text-align: justify;
+      font-size: 0.85rem;
+      padding-left: 10px;
+      padding-right: 10px;
+    }
+
+    #goods-cards {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      padding-top: 4px;
+      padding-bottom: 4px;
+    }
+
+    .card-item {
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      padding: 0.8rem;
+      background: #fafafa;
+      display: flex;
+      flex-direction: column;
+      gap: 0.3rem;
+    }
+
+    .item-title {
+      font-weight: bold;
+    }
+
+    .item-meta {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.95rem;
+    }
+
+    select {
+      margin-top: 0.5rem;
+      font-size: 0.95rem;
+      padding: 0.3rem 0.5rem;
+      width: 100%;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+      box-sizing: border-box;
+    }
+
+    .summary {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 5px;
+      margin: 0.8rem 0.5rem;
+      font-weight: bold;
+      font-size: 1.2rem;
+    }
+
+    .summary p {
+      margin: 0.05rem 0;
+      text-align: center;
+    }
+
+    table {
+      width: 100%;
+      max-width:  480px;
+      border-collapse: collapse;
+      margin-top: 1.5rem;
+      table-layout: fixed;
+    }
+
+    th, td {
+      border: 1px solid #ccc;
+      padding: 0.4rem 0.3rem;
+      text-align: center;
+      font-size: 0.8rem;
+      word-wrap: break-word;
+    }
+
+    th {
+      background: #f0f0f0;
+      color: #000;
+    }
+
+    .list-table th:nth-child(1), td:nth-child(1) {
+      width: 60%;
+    }
+
+    .list-table th:nth-child(2), td:nth-child(2) {
+      width: 20%;
+    }
+
+    .list-table th:nth-child(3), td:nth-child(3) {
+      width: 20%;
+    }
+
+    button {
+      width: 100%;
+      background-color: #548fae;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      padding: 0.8rem;
+      margin: 0.5rem 0;
+      cursor: pointer;
+      font-size: 1rem;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      transition: background-color 0.2s, box-shadow 0.2s, transform 0.1s;
+    }
+
+    button:hover {
+      background-color: #aac7df;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.15);
+      transform: translateY(-1px);
+    }
+
+    button:active {
+      background-color: #95bad8;
+      transform: translateY(1px);
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+
+    button:focus {
+      outline: 2px solid #88b0d1;
+      outline-offset: 2px;
+    }
+
+    #qrcode {
+      display: flex;
+      justify-content: center;
+      padding-top: 10px;
+    }
+
+  </style>
+</head>
+<body>
+
+  <!--変更箇所-->
+  <h2 id="event-title">
+    第3回 俺たちは、芝居がしたい！<br>
+    物販購入はこちらから
+  </h2>
+
+  <section id="pageSelect">
+    <h3>購入商品選択ページ</h3>
+    <!--変更箇所-->
+    <p class="description">
+      ・購入したい商品の個数を選択し、最下部の「確認へ」ボタンを押してください。<br>
+      ・応援カード対象商品の購入金額<b>1,500円毎に</b>応援カードを1枚お渡しします。<br><br>
+      ※物販購入時に選択した商品が売り切れの場合は、該当商品のみキャンセルとさせていただきます。
+    </p>
+    <div id="goods-cards"></div>
+    <div id="select-summary" class="summary"></div>
+    <button onclick="toConfirm()">確認へ</button>
+  </section>
+
+  <section id="pageConfirm" style="display:none">
+    <h3>購入商品確認ページ</h3>
+    <p class="description">
+      ・購入商品と金額、応援カード受け取り枚数をご確認の上、「完了（QR表示）」ボタンを押してください。<br>
+      ・修正したい場合は「戻る」ボタンを押してください。
+    </p>
+    <div id="confirm-list"></div>
+    <div id="confirm-summary" class="summary"></div>
+    <button onclick="backToSelection()">戻る</button>
+    <button onclick="toQR()">完了（QR表示）</button>
+  </section>
+
+  <section id="pageQR" style="display:none">
+    <h3>購入用QRページ</h3>
+    <p class="description">
+      ・物販購入の際、こちらのQRをご用意ください。<br>
+      ・再読み込み等でリセットされてしまうことがあるため、スクリーンショット等で保存することを推奨します。<br>
+      ・修正したい場合は「戻る」ボタンを押してください。
+    </p>
+    <div id="qrcode"></div>
+    <div id="qr-list"></div>
+    <div id="qr-summary" class="summary"></div>
+    <button onclick="backToConfirm()">戻る</button>
+  </section>
+
+  <script>
+
+    // 商品マスタ（変更箇所）
+    const GOODS_MASTER = [
+      { id: 1, name: "公演音声DLカード", price:2500 , bonus:0 },
+      { id: 2, name: "A5サイズ上演台本「帰帆」", price:2000 , bonus:0 },
+      { id: 3, name: "「帰帆」缶バッジ＆ステッカーセット「アトラ」", price:500 , bonus:0 },
+      { id: 4, name: "「帰帆」缶バッジ＆ステッカーセット「ガルナ」", price:500 , bonus:0 },
+      { id: 5, name: "「帰帆」缶バッジ＆ステッカーセット「ニーセル」", price:500 , bonus:0 },
+      { id: 6, name: "「帰帆」缶バッジ＆ステッカーセット「ロンディア」", price:500 , bonus:0 },
+      { id: 7, name: "「帰帆」缶バッジ＆ステッカーセット「キアリス」", price:500 , bonus:0 },
+      { id: 8, name: "キャストランダムブロマイド", price:1000 , bonus:0 },
+      { id: 9, name: "キャラクターブロマイドセット", price:1000 , bonus:0 },
+      { id:10, name: "水深ステッカー", price:300 , bonus:0 },
+      { id:11, name: "水深ステッカー2", price:300 , bonus:0 },
+      { id:12, name: "水深缶バッジ", price:400 , bonus:0 },
+      { id:13, name: "応援カード単品", price:800 , bonus:1 }
+    ];
+
+    // 応援カード付与対象（変更対象）
+    const BONUS_ITEMS = [1,2,3,4,5,6,7,8,9,10,11,12]
+    const BONUS_UNIT_AMOUNT = 1500;
+
+    // 共通変数
+    let selectItems = [];
+    let totalQty = 0;
+    let totalPrice = 0;
+    let totalBonus = 0;
+    let bonusItemsAmount = 0;
+
+    // 画面ロード時、選択画面処理を呼び出す
+    window.onload = select();
+
+    // 選択画面処理
+    function select() {
+
+      selectItems = GOODS_MASTER.map(g => ({ ...g, qty: 0 }));
+      const goodsCards = document.getElementById("goods-cards");
+      const selectSummary = document.getElementById("select-summary");
+
+      goodsCards.innerHTML = selectItems.map(g => {
+        const options = Array.from({ length: 51 }, (_, i) =>
+          `<option value="${i}" ${i === 0 ? "selected" : ""}>${i}</option>`
+        ).join("");
+        let bonusStatus = "";
+        if(BONUS_ITEMS.includes(g.id)){
+          bonusStatus = "*応援カード対象商品*"
+        }
+        return `
+          <div class="card-item">
+            <div class="item-title">${g.name}</div>
+            <div class="item-meta">
+              <span>価格: ￥${g.price}</span>
+              <span>${bonusStatus}</span>
+            </div>
+            <select data-id="${g.id}" class="select-option">${options}</select>
+          </div>`;
+      }).join("");      
+      
+      selectSummary.innerHTML = `
+            <p>合計金額</p>
+            <p>¥ ${totalPrice}</p>
+            <p>応援カードお渡し枚数</p>
+            <p>${totalBonus} 枚</p>
+      `;
+
+      // 数量選択時
+      const qtySelects = document.querySelectorAll('select[data-id]');
+      qtySelects.forEach(select => {
+        select.addEventListener("change", () => {
+          // 選択値を設定
+          const id = parseInt(select.dataset.id);
+          const newQty = parseInt(select.value) || 0;
+          const item = selectItems.find(g => g.id === id);
+          if (item) item.qty = newQty;
+
+          // 合計値を再計算
+          totalQty = selectItems.reduce((sum, g) => sum + g.qty, 0);
+          totalPrice = selectItems.reduce((sum, g) => sum + g.price * g.qty, 0);
+          totalBonus = selectItems.reduce((sum, g) => sum + g.bonus * g.qty, 0);
+          bonusItemsAmount = selectItems
+                              .filter(item => BONUS_ITEMS.includes(item.id))
+                              .reduce((sum, g) => sum + g.price * g.qty, 0)
+          totalBonus += Math.floor(bonusItemsAmount / BONUS_UNIT_AMOUNT);
+
+          selectSummary.innerHTML = `
+            <p>合計金額</p>
+            <p>¥ ${totalPrice}</p>
+            <p>応援カードお渡し枚数</p>
+            <p>${totalBonus} 枚</p>
+          `;
+        });
+      });
+    }
+
+    // 確認画面遷移処理
+    function toConfirm() {
+
+      // 購入リストを取得
+      const purchaseItems = selectItems.filter(g => g.qty > 0);
+      
+      // 購入リストが0件の場合、メッセージを表示する
+      if (!purchaseItems.length) {
+        alert("購入する数量を入力してください");
+        return;
+      }
+
+      // 画面表示内容を設定
+      const rows = purchaseItems.map(item => {
+        return `
+          <tr>
+            <td>${item.name}</td>
+            <td>${item.qty}</td>
+            <td>￥${item.price * item.qty}</td>
+          </tr>`;
+      }).join("");
+      
+      document.getElementById("confirm-list").innerHTML = `
+        <table class="list-table">
+          <thead><tr><th>商品名</th><th>数量</th><th>小計</th></tr></thead>
+          <tbody>${rows}</tbody>
+          <tfoot>
+            <tr>
+              <th>合計</th>
+              <th>${totalQty}点</th>
+              <th>￥${totalPrice}</th>
+            </tr>
+          </tfoot>
+        </table>
+      `
+      document.getElementById("confirm-summary").innerHTML = `
+        <p>合計金額</p>
+        <p>¥ ${totalPrice}</p>
+        <p>応援カードお渡し枚数</p>
+        <p>${totalBonus} 枚</p>
+      `
+
+      // 画面切り替え
+      document.getElementById("pageSelect").style.display = "none";
+      document.getElementById("pageConfirm").style.display = "block";
+    }
+
+    // 確認画面→選択画面
+    function backToSelection() {
+      document.getElementById("pageSelect").style.display = "block";
+      document.getElementById("pageConfirm").style.display = "none";
+      document.getElementById("pageQR").style.display = "none";
+    }
+
+    // QR表示画面遷移処理
+    function toQR() {
+
+      // 購入リストを取得（JSONに埋め込む形式に変換）
+      const purchaseItems = selectItems.filter(g => g.qty > 0);
+      const purchaseItemsForQR = purchaseItems.map(g => [g.id, g.qty]);
+
+      // QRコードの生成
+      const qrDiv = document.getElementById("qrcode");
+      qrDiv.innerHTML = "";
+      new QRCode(qrDiv, { text: JSON.stringify(purchaseItemsForQR), width: 256, height: 256 });
+
+      // 画面表示内容を設定
+      const rows = purchaseItems.map(item => {
+        return `
+          <tr>
+            <td>${item.name}</td>
+            <td>${item.qty}</td>
+            <td>￥${item.price * item.qty}</td>
+          </tr>`;
+      }).join("");
+      
+      document.getElementById("qr-list").innerHTML = `
+        <table class="list-table">
+          <thead><tr><th>商品名</th><th>数量</th><th>小計</th></tr></thead>
+          <tbody>${rows}</tbody>
+          <tfoot>
+            <tr>
+              <th>合計</th>
+              <th>${totalQty}点</th>
+              <th>￥${totalPrice}</th>
+            </tr>
+          </tfoot>
+        </table>
+      `
+      document.getElementById("qr-summary").innerHTML = `
+        <p>合計金額</p>
+        <p>¥ ${totalPrice}</p>
+        <p>応援カードお渡し枚数</p>
+        <p>${totalBonus} 枚</p>
+      `
+
+      // 画面切り替え
+      document.getElementById("pageConfirm").style.display = "none";
+      document.getElementById("pageQR").style.display = "block";
+    }
+
+    // QR表示画面→選択画面
+    function backToConfirm(){
+      document.getElementById("pageSelect").style.display = "block";
+      document.getElementById("pageConfirm").style.display = "none";
+      document.getElementById("pageQR").style.display = "none";
+    }
+
+  </script>
+</body>
+</html>
